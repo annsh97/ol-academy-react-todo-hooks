@@ -1,54 +1,59 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 function Todo() {
-  const [todos, setTodos] = useState([]);
   const [newItem, setNewItem] = useState("");
+  const [todos, setTodos] = useState([]);
+  const [editID, setEditId] = useState(null);
 
-  const updateInput = (key, value) => {
-    return { [key]: value };
+  const updateInput = (value) => {
+    setNewItem(value);
   };
 
-  const addItem = (id, tittle) => {
-    const newItems = {
-      id: 1 + Math.random(),
-      value: newItem.slice(),
+  // კომპონენტი 5
+  const addItem = () => {
+    const newID = todos.length === 0 ? 1 : todos[todos.length - 1].id + 1;
+    const newTask = {
+      id: newID,
+      value: newItem,
       isCheckboxed: false,
       isDone: false,
     };
-
-    setTodos(todos);
-
-    todos.push(newItem);
-
-    setTodos(newItems);
+    setTodos([...todos, newTask]);
+    setNewItem("");
   };
 
   const deleteItem = (id) => {
-    setTodos(todos);
-
     const updatedTodos = todos.filter((item) => item.id !== id);
-
     setTodos(updatedTodos);
   };
   const editItem = (id) => {
-    const filterItems = todos.filter((item) => item.id !== id);
-
-    const selectItem = todos.find((item) => item.id === id);
-
-    setTodos(filterItems, selectItem);
+    setEditId(id);
+    todos.forEach((item) => {
+      if (item.id === id) {
+        setNewItem(item.value);
+      }
+    });
+  };
+  const edit = () => {
+    const newTodos = todos;
+    newTodos.map((item) => {
+      if (item.id === editID) {
+        item.value = newItem;
+      }
+    });
+    setTodos(newTodos);
+    setNewItem("");
+    setEditId(null);
   };
 
   const deleteAll = (id) => {
-    setTodos(todos);
-
     const updatedTodos = todos.filter((item) => item.id === id);
-
     setTodos(updatedTodos);
   };
 
-  const isCheckboxed = (e) => {
+  const isCheckboxed = (id, e) => {
     const isCheckboxedArray = todos.map((todo) => {
-      if (e.target.parentElement.childNodes[0].textContent === todo.value) {
+      if (id === todo.id) {
         return {
           ...todo,
           isCheckboxed: !todo.isCheckboxed,
@@ -58,10 +63,9 @@ function Todo() {
     });
     setTodos(isCheckboxedArray);
   };
-
-  const taskIsDone = (e) => {
+  const taskIsDone = (id) => {
     const isDoneTodo = todos.map((todo) => {
-      if (todo.id === e) {
+      if (todo.id === id) {
         return {
           ...todo,
           isDone: !todo.isDone,
@@ -101,68 +105,72 @@ function Todo() {
           <input // კომპონენტი 3.0
             type="text"
             placeholder="Type here..."
-            value={addItem.newItems}
-            onChange={(e) => updateInput("newItem", e.target.value)}
+            value={newItem}
+            onChange={(e) => updateInput(e.target.value)}
           />
           <button // კომპონენტი 4.1, 4.2.
             type="submit"
             className="add-btn btn-floating"
-            onClick={addItem()}
-            disabled={addItem.newItems}
+            onClick={editID === null ? addItem : edit}
           >
-            <i className="material-icons">add</i>
+            {editID === null ? (
+              <i className="material-icons">add</i>
+            ) : (
+              <i className="material-icons">update</i>
+            )}
           </button>
           <br /> <br />
-          <ul>
-            {todos.map((item) => {
-              return (
-                <li key={item.id}>
-                  {item.value}
+          {todos.length > 0 && (
+            <ul>
+              {todos.map((item) => {
+                console.log(todos);
+                return (
+                  <li key={item.id}>
+                    {item.value}
+                    <input
+                      type="checkbox"
+                      onClick={(event) => isCheckboxed(item.id, event)}
+                    />
+                    <button
+                      className="btn btn-floating"
+                      onClick={() => deleteItem(item.id)}
+                    >
+                      <i className="material-icons">delete</i>
+                    </button>
 
-                  <input
-                    type="checkbox"
-                    onClick={(event) => isCheckboxed(event)}
-                  />
-                  <button
-                    className="btn btn-floating"
-                    onClick={deleteItem(item.id)}
-                  >
-                    <i className="material-icons">delete</i>
-                  </button>
-
-                  <button
-                    className="btn btn-floating"
-                    onClick={editItem(item.id)}
-                  >
-                    <i className="material-icons">edit</i>
-                  </button>
-                  <button
-                    className={item.isDone ? "floating" : "btn btn-floating"}
-                    onClick={taskIsDone(item.id)}
-                  >
-                    <i className="material-icons">Complete</i>
-                  </button>
-                </li>
-              );
-            })}
-            <br></br>
-            <button className="button" onClick={deleteAll()}>
-              <i class="material-icons">Delete All</i>
-            </button>
-            <br></br>
-            <button
-              className="button"
-              color="red"
-              onClick={deleteAllFinishedTask()}
-            >
-              <i class="material-icons">Delete Done Todos</i>
-            </button>
-
-            <br></br>
-            <button className="button" onClick={deleteCheckboxedTask()}>
-              <i class="material-icons">Delete CheckBoxed Tasks</i>
-            </button>
-          </ul>
+                    <button
+                      className="btn btn-floating"
+                      onClick={() => editItem(item.id)}
+                    >
+                      <i className="material-icons">edit</i>
+                    </button>
+                    <button
+                      className={item.isDone ? "floating" : "btn btn-floating"}
+                      onClick={() => taskIsDone(item.id)}
+                    >
+                      <i className="material-icons">Complete</i>
+                    </button>
+                  </li>
+                );
+              })}
+              <br></br>
+              <button className="button" onClick={() => deleteAll()}>
+                <i className="material-icons">Delete All</i>
+              </button>
+              <br></br>
+              <button
+                className="button"
+                color="red"
+                onClick={() => deleteAllFinishedTask()}
+              >
+                <i className="material-icons">Delete Done Todos</i>
+              </button>
+              <br></br>
+              <button className="button" onClick={() => deleteCheckboxedTask()}>
+                <i className="material-icons">Delete CheckBoxed Tasks</i>
+              </button>
+            </ul>
+          )}
         </div>
       </div>
     </div>
